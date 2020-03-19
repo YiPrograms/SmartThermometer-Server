@@ -23,6 +23,7 @@ var colNow int
 var lastDate time.Time
 
 func writeTemp(num int, temp float32) {
+	checkDate()
 	writeCell(fmt.Sprintf("%.1f", temp), colNow, rowMap[num], false)
 }
 
