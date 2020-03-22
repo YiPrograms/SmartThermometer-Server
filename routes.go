@@ -55,7 +55,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cards[rReq.UID] = card{rReq.UID, rReq.Num, ""}
+	cards[rReq.UID] = card{rReq.UID, rReq.Num, rReq.Name}
 	go saveCards("cards.json")
 }
 

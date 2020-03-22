@@ -23,9 +23,10 @@ type queryResponse struct {
 }
 
 type registerRequest struct {
-	UID string
-	Num int
-	Key string
+	UID  string
+	Num  int
+	Name string
+	Key  string
 }
 
 type placeRequest struct {
