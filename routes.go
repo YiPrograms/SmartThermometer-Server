@@ -55,7 +55,17 @@ func register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cards[rReq.UID] = card{rReq.UID, rReq.Num, rReq.Name}
+	if rReq.Num == -1 {
+		_, e := cards[rReq.UID]
+		if e {
+			delete(cards, rReq.UID)
+		} else {
+			http.Error(w, "Not registered", 406)
+		}
+	} else {
+		cards[rReq.UID] = card{rReq.UID, rReq.Num, rReq.Name}
+	}
+
 	go saveCards("cards.json")
 }
 
