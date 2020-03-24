@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -24,7 +25,23 @@ var lastDate time.Time
 
 func writeTemp(num int, temp float32) {
 	checkDate()
-	writeCell(fmt.Sprintf("%.1f", temp), colNow, rowMap[num], false)
+	cur := readCell(colNow, rowMap[num])
+
+	morTemp := "-"
+	aftTemp := "-"
+
+	if cur != "" {
+		res := strings.Split(cur, "/")
+		morTemp, aftTemp = res[0], res[1]
+	}
+
+	loc, _ := time.LoadLocation(conf.TimeZone)
+
+	if time.Now().In(loc).Hour()+1 < conf.Noon {
+		writeCell(fmt.Sprintf("%.1f", temp)+"/"+aftTemp, colNow, rowMap[num], false)
+	} else {
+		writeCell(morTemp+"/"+fmt.Sprintf("%.1f", temp), colNow, rowMap[num], false)
+	}
 }
 
 func checkDate() {
@@ -38,11 +55,8 @@ func checkDate() {
 			fmt.Println(err)
 		}
 
-		l, err := time.LoadLocation(conf.TimeZone)
-		if err != nil {
-			fmt.Println(err)
-		}
-		curDate := time.Now().In(l)
+		loc, _ := time.LoadLocation(conf.TimeZone)
+		curDate := time.Now().In(loc)
 
 		if !(t.Month() == curDate.Month() && t.Day() == curDate.Day()) {
 			fmt.Println("Getting to the next day")
@@ -147,7 +161,11 @@ func toChar(i int) string {
 }
 
 func readCell(col int, row int) string {
-	return readSheet(fmt.Sprintf("%s%d:%s%d", toChar(col), row, toChar(col), row)).Values[0][0].(string)
+	read := readSheet(fmt.Sprintf("%s%d:%s%d", toChar(col), row, toChar(col), row))
+	if read != nil {
+		return read.Values[0][0].(string)
+	}
+	return ""
 }
 
 func authGSheets() {

@@ -4,6 +4,7 @@ type config struct {
 	Key      string
 	SheetsID string
 	TimeZone string
+	Noon     int
 }
 
 type card struct {

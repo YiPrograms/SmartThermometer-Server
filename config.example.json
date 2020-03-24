@@ -1,5 +1,6 @@
 {
     "Key":"PRE-SHARED_KEY",
     "SheetsID": "GOOGLE_SHEETS_ID",
-    "TimeZone": "Asia/Taipei"
+    "TimeZone": "Asia/Taipei",
+    "Noon": 13
 }
