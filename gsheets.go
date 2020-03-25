@@ -27,8 +27,8 @@ func writeTemp(num int, temp float32) {
 	checkDate()
 	cur := readCell(colNow, rowMap[num])
 
-	morTemp := "-"
-	aftTemp := "-"
+	morTemp := "--"
+	aftTemp := "--"
 
 	if cur != "" {
 		res := strings.Split(cur, "/")

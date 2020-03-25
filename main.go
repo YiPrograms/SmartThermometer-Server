@@ -1,16 +1,23 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var conf config
 var cards = make(map[string]card)
+
+var db *sql.DB
+
+var queryStmt, registerStmt, delStmt *sql.Stmt
 
 func loadConf(file string) {
 	configFile, err := os.Open(file)
@@ -53,8 +60,23 @@ func saveCards(file string) {
 	ioutil.WriteFile(file, JSONString, os.ModePerm)
 }
 
+func loadDatabase(file string) {
+	db, _ = sql.Open("sqlite3", file)
+	stmt, _ := db.Prepare(`CREATE TABLE IF NOT EXISTS Cards(
+								UID TEXT PRIMARY KEY,
+								Num TEXT,
+								Name TEXT
+							)`)
+	stmt.Exec()
+
+	queryStmt, _ = db.Prepare("SELECT Num, Name FROM Cards WHERE UID=?")
+	registerStmt, _ = db.Prepare("REPLACE INTO Cards(UID, Num, Name) VALUES(?, ?, ?)")
+	delStmt, _ = db.Prepare("DELETE FROM Cards WHERE UID=?")
+}
+
 func main() {
 	loadConf("config.json")
+	loadDatabase("cards.db")
 	loadCards("cards.json")
 	defer saveCards("cards.json")
 

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -24,13 +26,23 @@ func query(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var Num int
+	var Name string
+
+	err = queryStmt.QueryRow(qReq.UID).Scan(&Num, &Name)
+
 	var qRes queryResponse
 
-	c, ok := cards[qReq.UID]
-	if !ok {
-		qRes = queryResponse{-1, ""}
+	if err != nil {
+		if err == sql.ErrNoRows {
+			qRes = queryResponse{-1, ""}
+		} else {
+			fmt.Println(err)
+			http.Error(w, "SQL Error", 500)
+			return
+		}
 	} else {
-		qRes = queryResponse{c.Num, c.Name}
+		qRes = queryResponse{Num, Name}
 	}
 
 	json.NewEncoder(w).Encode(qRes)
@@ -56,17 +68,19 @@ func register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if rReq.Num == -1 {
-		_, e := cards[rReq.UID]
-		if e {
-			delete(cards, rReq.UID)
-		} else {
+		res, err := delStmt.Exec(rReq.UID)
+		if err != nil {
+			fmt.Println(err)
+			http.Error(w, "SQL Error", 500)
+			return
+		}
+		rows, _ := res.RowsAffected()
+		if rows == 0 {
 			http.Error(w, "Not registered", 406)
 		}
 	} else {
-		cards[rReq.UID] = card{rReq.UID, rReq.Num, rReq.Name}
+		registerStmt.Exec(rReq.UID, rReq.Num, rReq.Name)
 	}
-
-	go saveCards("cards.json")
 }
 
 func place(w http.ResponseWriter, r *http.Request) {

@@ -4,3 +4,4 @@ credentials.json
 token.json
 server.crt
 server.key
+cards.db
