@@ -17,17 +17,42 @@ openssl req -new -x509 -key server.key -out server.crt -days 365
 
 
 ## Dependencies
-```
-go get -u google.golang.org/api/sheets/v4
-go get -u golang.org/x/oauth2/google
-```
+- google.golang.org/api/sheets/v4
+- golang.org/x/oauth2/google
+- github.com/mattn/go-sqlite3
 
-## Run
-```
-go run .
-```
+Use `go mod download` to install them
 
 ## Build
 ```
 go build
 ```
+
+## Run
+
+### Just run
+```
+./smart-therometer
+```
+
+### Systemd service
+```
+# /etc/systemd/system/smart-thermometer.service
+
+[Unit]
+Description=Smart Thermometer
+
+[Service]
+WorkingDirectory=/home/yi/SmartThermometer-Server
+ExecStart=/home/yi/SmartThermometer-Server/smart-thermometer
+
+[Install]
+WantedBy=multi-user.target
+```
+
+And then
+```
+sudo systemd enable --now smart-thermometer
+```
+to start and run on boot
+
