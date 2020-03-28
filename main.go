@@ -53,6 +53,7 @@ func main() {
 	http.HandleFunc("/query", query)
 	http.HandleFunc("/place", place)
 	http.HandleFunc("/register", register)
+	http.HandleFunc("/deregister", deregister)
 
 	log.Println("Now starting HTTPS Server...")
 	log.Fatal(http.ListenAndServeTLS(":9000", "server.crt", "server.key", nil))

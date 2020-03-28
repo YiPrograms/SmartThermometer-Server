@@ -63,16 +63,15 @@ func query(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			qRes = queryResponse{-1, ""}
+			http.Error(w, "No entry found", 422)
+			log.Println(ip, ": 422 No entry found")
 		} else {
 			http.Error(w, "SQL Error", 500)
 			log.Println(ip, ": 500 SQL Error:", err)
-			return
 		}
-	} else {
-		qRes = queryResponse{Num, Name}
+		return
 	}
-
+	qRes = queryResponse{Num, Name}
 	json.NewEncoder(w).Encode(qRes)
 	log.Println(ip, ": 200 OK")
 }
@@ -113,28 +112,67 @@ func register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if rReq.Num == -1 {
-		res, err := delStmt.Exec(rReq.UID)
-		if err != nil {
-			fmt.Println(err)
-			http.Error(w, "SQL Error", 500)
-			log.Println(ip, ": 500 SQL Error:", err)
-			return
-		}
-		rows, _ := res.RowsAffected()
-		if rows == 0 {
-			http.Error(w, "Not registered", 406)
-			log.Println(ip, ": 406 Not registered")
-		}
-	} else {
-		_, err := registerStmt.Exec(rReq.UID, rReq.Num, rReq.Name)
-		if err != nil {
-			fmt.Println(err)
-			http.Error(w, "SQL Error", 500)
-			log.Println(ip, ": 500 SQL Error:", err)
-			return
-		}
+	_, err = registerStmt.Exec(rReq.UID, rReq.Num, rReq.Name)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "SQL Error", 500)
+		log.Println(ip, ": 500 SQL Error:", err)
+		return
 	}
+
+	log.Println(ip, ": 200 OK")
+}
+
+func deregister(w http.ResponseWriter, r *http.Request) {
+	ip := getIP(r)
+	log.Println(ip, ": Deregister request from", ip)
+
+	r.ParseForm()
+	if r.Body == nil {
+		http.Error(w, "Please send a request body", 400)
+		log.Println(ip, ": 400 No request body")
+		return
+	}
+
+	buf, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		log.Println(ip, ": 500 Parse body error:", err)
+		return
+	}
+
+	body := ioutil.NopCloser(bytes.NewBuffer(buf))
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(buf))
+	log.Println(ip, ":", body)
+
+	var dReq deregisterRequest
+	err = json.NewDecoder(r.Body).Decode(&dReq)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		log.Println(ip, ": 400 JSON decode error:", err)
+		return
+	}
+
+	if dReq.Key != conf.Key {
+		http.Error(w, "Incorrect key", 403)
+		log.Println(ip, ": 403 Incorrect key:", dReq.Key)
+		return
+	}
+
+	res, err := delStmt.Exec(dReq.UID)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "SQL Error", 500)
+		log.Println(ip, ": 500 SQL Error:", err)
+		return
+	}
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		http.Error(w, "Not registered", 422)
+		log.Println(ip, ": 422 Not registered")
+		return
+	}
+
 	log.Println(ip, ": 200 OK")
 }
 
@@ -175,5 +213,7 @@ func place(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go writeTemp(pReq.Num, pReq.Temp)
-	log.Println(ip, ": 200 OK")
+
+	w.WriteHeader(202)
+	log.Println(ip, ": 202 Accepted")
 }

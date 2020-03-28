@@ -24,6 +24,12 @@ var colNow int
 var lastDate time.Time
 
 func writeTemp(num int, temp float32) {
+	_, ok := rowMap[num]
+	if !ok {
+		log.Println("GSheets Write Temp: Can't find number", num)
+		return
+	}
+
 	checkDate()
 	cur := readCell(colNow, rowMap[num])
 

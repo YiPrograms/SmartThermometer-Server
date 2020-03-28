@@ -30,6 +30,11 @@ type registerRequest struct {
 	Key  string
 }
 
+type deregisterRequest struct {
+	UID string
+	Key string
+}
+
 type placeRequest struct {
 	Num  int
 	Temp float32
