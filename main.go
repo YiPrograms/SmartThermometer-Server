@@ -18,6 +18,7 @@ var db *sql.DB
 var queryStmt, registerStmt, delStmt *sql.Stmt
 
 func loadConf(file string) {
+	log.Println("Loading config...")
 	configFile, err := os.Open(file)
 	defer configFile.Close()
 	if err != nil {
@@ -28,6 +29,7 @@ func loadConf(file string) {
 }
 
 func loadDatabase(file string) {
+	log.Println("Loading database...")
 	db, _ = sql.Open("sqlite3", file)
 	stmt, _ := db.Prepare(`CREATE TABLE IF NOT EXISTS Cards(
 								UID TEXT PRIMARY KEY,
@@ -42,6 +44,7 @@ func loadDatabase(file string) {
 }
 
 func main() {
+	log.Println("Starting server...")
 	loadConf("config.json")
 	loadDatabase("cards.db")
 
@@ -51,5 +54,6 @@ func main() {
 	http.HandleFunc("/place", place)
 	http.HandleFunc("/register", register)
 
+	log.Println("Now starting HTTPS Server...")
 	log.Fatal(http.ListenAndServeTLS(":9000", "server.crt", "server.key", nil))
 }

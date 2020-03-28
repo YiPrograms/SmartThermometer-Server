@@ -35,12 +35,18 @@ func writeTemp(num int, temp float32) {
 		morTemp, aftTemp = res[0], res[1]
 	}
 
-	loc, _ := time.LoadLocation(conf.TimeZone)
+	loc, err := time.LoadLocation(conf.TimeZone)
+	if err != nil {
+		log.Println("GSheets Time Loc: ", err)
+	}
 
 	if time.Now().In(loc).Hour()+1 < conf.Noon {
-		writeCell(fmt.Sprintf("%.1f", temp)+"/"+aftTemp, colNow, rowMap[num], false)
+		err = writeCell(fmt.Sprintf("%.1f", temp)+"/"+aftTemp, colNow, rowMap[num], false)
 	} else {
-		writeCell(morTemp+"/"+fmt.Sprintf("%.1f", temp), colNow, rowMap[num], false)
+		err = writeCell(morTemp+"/"+fmt.Sprintf("%.1f", temp), colNow, rowMap[num], false)
+	}
+	if err != nil {
+		log.Println("GSheets Write Temp: ", err)
 	}
 }
 
@@ -52,18 +58,18 @@ func checkDate() {
 		layout := "1/2"
 		t, err := time.Parse(layout, latestDate)
 		if err != nil {
-			fmt.Println(err)
+			log.Println("GSheets Date: ", err)
 		}
 
 		loc, _ := time.LoadLocation(conf.TimeZone)
 		curDate := time.Now().In(loc)
 
 		if !(t.Month() == curDate.Month() && t.Day() == curDate.Day()) {
-			fmt.Println("Getting to the next day")
+			log.Println("GSheets Date: Getting to the next day")
 			colNow++
 			err := writeCell(fmt.Sprintf("%d/%d", curDate.Month(), curDate.Day()), colNow, 1, false)
 			if err != nil {
-				fmt.Println(err)
+				log.Println("GSheets Date: ", err)
 			}
 		}
 	}
@@ -131,7 +137,6 @@ func readSheet(readRange string) *sheets.ValueRange {
 		return nil
 	}
 	if len(resp.Values) == 0 {
-		fmt.Println("No data found.")
 		return nil
 	}
 	return resp
@@ -188,13 +193,14 @@ func authGSheets() {
 }
 
 func gsheetsInit() {
+	log.Println("Connecting to GSheets...")
 	authGSheets()
 
 	for r, row := range readSheet("A:B").Values {
 		if len(row) > 1 && row[1] != "" {
 			num, err := strconv.Atoi(row[1].(string))
 			if err != nil {
-				fmt.Println(err)
+				log.Println("GSheets Row Map: ", err)
 			}
 			rowMap[num] = r + 1
 		}
