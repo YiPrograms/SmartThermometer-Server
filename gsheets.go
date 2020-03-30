@@ -61,6 +61,11 @@ func checkDate() {
 		lastDate = time.Now()
 
 		latestDate := readCell(colNow, 1)
+		if latestDate == "" {
+			getLastCol()
+			latestDate = readCell(colNow, 1)
+		}
+
 		layout := "1/2"
 		t, err := time.Parse(layout, latestDate)
 		if err != nil {
@@ -198,10 +203,7 @@ func authGSheets() {
 	}
 }
 
-func gsheetsInit() {
-	log.Println("Connecting to GSheets...")
-	authGSheets()
-
+func getLastCol() {
 	for r, row := range readSheet("A:B").Values {
 		if len(row) > 1 && row[1] != "" {
 			num, err := strconv.Atoi(row[1].(string))
@@ -213,5 +215,12 @@ func gsheetsInit() {
 	}
 
 	colNow = len(readSheet("1:1").Values[0])
+}
+
+func gsheetsInit() {
+	log.Println("Connecting to GSheets...")
+	authGSheets()
+
+	getLastCol()
 	checkDate()
 }
