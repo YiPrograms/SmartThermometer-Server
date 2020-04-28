@@ -170,10 +170,13 @@ func writeCell(val string, col int, row int, raw bool) error {
 	return err
 }
 
-const abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
 func toChar(i int) string {
-	return abc[i-1 : i]
+	res := ""
+	for i > 0 {
+		res = string('A'+(i-1)%26) + res
+		i = (i - 1) / 26
+	}
+	return res
 }
 
 func readCell(col int, row int) string {
